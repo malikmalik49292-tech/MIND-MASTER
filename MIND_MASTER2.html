@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MIND MASTER - Picture Puzzle Challenge | Play Free</title>
+    <style>
+        /* ================= CSS VARIABLES & RESETS ================= */
+        :root {
+            --bg: #07111f;
+            --primary: #00d9ff;
+            --secondary: #7c3aed;
+            --text: #ffffff;
+            --text-muted: #8ab4f8;
+            --danger: #ff4757;
+            --success: #2ed573;
+            --panel: rgba(13, 27, 42, 0.75);
+            --panel-border: rgba(0, 217, 255, 0.2);
+            --glow: 0 0 15px rgba(0, 217, 255, 0.5);
+            --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(124, 58, 237, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(0, 217, 255, 0.15), transparent 25%);
+            color: var(--text);
+            font-family: var(--font-main);
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* ================= UI COMPONENTS ================= */
+        .screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease-in-out;
+            z-index: 10;
+        }
+
+        .screen.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .glass-panel {
+            background: var(--panel);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--panel-border);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            max-width: 90%;
+            width: 400px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+            text-shadow: var(--glow);
+        }
+
+        h2 { font-size: 1.5rem; margin-bottom: 20px; color: var(--text-muted); }
+        h3 { font-size: 1.2rem; margin-bottom: 15px; color: var(--primary); }
+
+        .btn {
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.2), rgba(124, 58, 237, 0.2));
+            border: 1px solid var(--primary);
+            color: var(--text);
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px 0;
+            width: 100%;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover, .btn:active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            box-shadow: var(--glow);
+            transform: scale(1.02);
+        }
+
+        .btn:disabled {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.3);
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .btn-small { width: auto; padding: 8px 16px; font-size: 0.9rem; margin: 5px; }
+
+        .icon-btn {
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--primary);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .icon-btn:hover { transform: scale(1.2); }
+
+        /* ================= HEADER / TOP BAR ================= */
+        .top-bar {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            z-index: 20;
+        }
+
+        .stats-hud {
+            display: flex;
+            gap: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        .hud-item { display: flex; align-items: center; gap: 5px; }
+
+        /* ================= LEVEL SELECT ================= */
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            gap: 12px;
+            max-height: 60vh;
+            overflow-y: auto;
+            padding: 10px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .level-grid::-webkit-scrollbar { width: 6px; }
+        .level-grid::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+
+        .level-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .level-card.unlocked:hover {
+            background: rgba(0, 217, 255, 0.15);
+            border-color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 217, 255, 0.3);
+        }
+
+        .level-card.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .level-num { font-size: 1.5rem; font-weight: bold; }
+        .level-stars { font-size: 0.7rem; color: #ffd700; height: 12px; }
+        .level-diff { font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); }
+
+        /* ================= GAME BOARD ================= */
+        #game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            margin-top: 50px; /* space for top bar */
+        }
+
+        .game-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .timer {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary);
+            transition: color 0.3s;
+        }
+        .timer.danger { color: var(--danger); animation: pulse 1s infinite; }
+
+        #board-wrapper {
+            width: 100%;
+            aspect-ratio: 1/1;
+            background: #000;
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            position: relative;
+            box-shadow: var(--glow);
+            overflow: hidden;
+            touch-action: none; /* Prevent scroll on mobile swipe */
+        }
+
+        .tile {
+            position: absolute;
+            background-repeat: no-repeat;
+            border: 1px solid rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: transparent;
+            z-index: 2;
+        }
+
+        .tile.fallback-img {
+            color: var(--text);
+            background-image: linear-gradient(135deg, var(--secondary), var(--bg)) !important;
+        }
+
+        .tile:hover { z-index: 3; box-shadow: inset 0 0 20px rgba(255,255,255,0.3); }
+
+        .tile.hint-glow {
+            animation: hintPulse 1s infinite;
+            z-index: 4;
+        }
+
+        .game-controls {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        /* ================= MODALS ================= */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 100;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+
+        .modal-content {
+            background: var(--bg);
+            border: 1px solid var(--primary);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 217, 255, 0.4);
+            transform: scale(0.8);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 90%;
+            width: 350px;
+        }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+
+        .stars-display { font-size: 2.5rem; margin: 15px 0; color: #ffd700; letter-spacing: 5px; }
+        .stat-row { display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;}
+        
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+            font-size: 1.2rem;
+        }
+
+        /* Toggle Switch */
+        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.2); transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary); box-shadow: 0 0 10px var(--primary); }
+        input:checked + .slider:before { transform: translateX(26px); }
+
+        /* ================= ANIMATIONS ================= */
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; transform: scale(1.05); } 100% { opacity: 1; } }
+        @keyframes hintPulse { 0% { box-shadow: inset 0 0 0 3px var(--primary), 0 0 15px var(--primary); } 50% { box-shadow: inset 0 0 0 5px #fff, 0 0 25px #fff; } 100% { box-shadow: inset 0 0 0 3px var(--primary), 0 0 15px var(--primary); } }
+        
+        .fade-in { animation: fadeIn 0.5s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ================= RESPONSIVE ================= */
+        @media (max-width: 480px) {
+            h1 { font-size: 2rem; }
+            .glass-panel { padding: 20px; }
+            .btn { padding: 10px 20px; font-size: 1rem; }
+            #game-area { padding: 10px; margin-top: 40px;}
+            .timer { font-size: 1.5rem; }
+            .stats-hud { font-size: 0.9rem; }
+        }
+    
+/* ================= EARNING-READY MONETIZATION UI ================= */
+.ad-wrap{
+    width:min(728px,92vw);
+    min-height:90px;
+    margin:12px auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:12px;
+    background:rgba(0,0,0,.18);
+}
+.ad-label{
+    position:absolute;
+    top:4px;
+    left:8px;
+    font-size:9px;
+    color:rgba(255,255,255,.38);
+    letter-spacing:1px;
+    text-transform:uppercase;
+    pointer-events:none;
+}
+.ad-wrap .adsbygoogle{display:block;width:100%;min-height:70px}
+.monetize-note{
+    font-size:.72rem;
+    color:var(--text-muted);
+    line-height:1.35;
+    margin-top:8px;
+}
+.reward-card{
+    margin-top:14px;
+    padding:12px;
+    border:1px solid rgba(255,215,0,.25);
+    border-radius:12px;
+    background:rgba(255,215,0,.05);
+}
+.reward-card strong{color:#ffd700}
+.consent-banner{
+    position:fixed;
+    left:12px;
+    right:12px;
+    bottom:12px;
+    z-index:300;
+    max-width:760px;
+    margin:auto;
+    padding:14px 16px;
+    border:1px solid rgba(0,217,255,.25);
+    border-radius:14px;
+    background:rgba(7,17,31,.96);
+    backdrop-filter:blur(12px);
+    box-shadow:0 10px 40px rgba(0,0,0,.5);
+    display:none;
+}
+.consent-banner.active{display:block}
+.consent-actions{display:flex;gap:8px;margin-top:10px}
+.consent-actions .btn{margin:0}
+.ad-disabled{display:none!important}
+@media(max-width:480px){
+    .ad-wrap{min-height:70px}
+    .consent-actions{flex-direction:column}
+}
+
+</style>
+
+<!-- =========================================================
+     MIND MASTER MONETIZATION CONFIG
+     1) Replace ca-pub-XXXXXXXXXXXXXXXX with your real
+        Google AdSense publisher ID.
+     2) Replace the data-ad-slot placeholders with your ad-unit IDs.
+     3) If you don't have AdSense yet, leave monetizationEnabled=false.
+     ========================================================= -->
+<script>
+const MONETIZATION_CONFIG = {
+    monetizationEnabled: false,
+    adsensePublisherId: "ca-pub-XXXXXXXXXXXXXXXX",
+    bannerSlot: "XXXXXXXXXX",
+    gameSlot: "XXXXXXXXXX",
+    interstitialEvery: 3,
+    rewardEnabled: false
+};
+</script>
+
+</head>
+
+<script>
+function adsConfigured(){
+    return MONETIZATION_CONFIG.monetizationEnabled &&
+           MONETIZATION_CONFIG.adsensePublisherId &&
+           !MONETIZATION_CONFIG.adsensePublisherId.includes("XXXXXXXX");
+}
+function renderAd(slot, format="auto"){
+    if(!adsConfigured()) return;
+    const blocks = document.querySelectorAll(`[data-ad-slot="${slot}"]`);
+    blocks.forEach(el=>{
+        el.setAttribute("data-ad-client", MONETIZATION_CONFIG.adsensePublisherId);
+        el.setAttribute("data-ad-slot", slot);
+        el.setAttribute("data-ad-format", format);
+        el.setAttribute("data-full-width-responsive", "true");
+        try{ (window.adsbygoogle = window.adsbygoogle || []).push({}); }catch(e){}
+    });
+}
+function showConfiguredAdMessage(){
+    const modal = document.getElementById("modal-ad-info");
+    if(modal) modal.classList.add("active");
+}
+function acceptAdsConsent(){
+    localStorage.setItem("mindMasterAdsConsent","accepted");
+    document.getElementById("consent-banner")?.classList.remove("active");
+}
+function declineAdsConsent(){
+    localStorage.setItem("mindMasterAdsConsent","declined");
+    document.getElementById("consent-banner")?.classList.remove("active");
+}
+
+function loadAdNetwork(){
+    if(!adsConfigured()) return;
+    if(document.querySelector('script[data-mindmaster-adsense]')) return;
+    const s=document.createElement('script');
+    s.async=true;
+    s.src='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client='+
+          encodeURIComponent(MONETIZATION_CONFIG.adsensePublisherId);
+    s.crossOrigin='anonymous';
+    s.setAttribute('data-mindmaster-adsense','1');
+    document.head.appendChild(s);
+}
+
+function initMonetization(){
+    const consent = localStorage.getItem("mindMasterAdsConsent");
+    if(consent === "accepted"){
+        renderAd(MONETIZATION_CONFIG.bannerSlot);
+        renderAd(MONETIZATION_CONFIG.gameSlot);
+    } else if(!consent && adsConfigured()){
+        document.getElementById("consent-banner")?.classList.add("active");
+    }
+}
+function maybeShowAdAfterLevel(){
+    if(!adsConfigured()) return;
+    if(game.levelId % MONETIZATION_CONFIG.interstitialEvery === 0){
+        // Placeholder hook for a real web interstitial/rewarded-ad provider.
+        // Do not fake an ad or payment. Connect your approved ad provider here.
+        renderAd(MONETIZATION_CONFIG.bannerSlot);
+    }
+}
+</script>
+
+<body>
+
+    <!--
+ MIND MASTER EARNING-READY EDITION
+ - 50 puzzle levels
+ - Local progress saving
+ - Responsive desktop/mobile controls
+ - Google AdSense-ready ad placements
+ - Consent notice
+ - Reward-ad integration hook
+ - No fake earnings and no fake payment system
+ - No backend required for the base game
+-->
+<!-- ================= MAIN MENU ================= -->
+    <div id="screen-menu" class="screen active">
+        <div class="glass-panel fade-in">
+            <h1>MIND MASTER</h1>
+            <h2>Picture Puzzle Challenge</h2>
+            
+            <div style="margin: 20px 0; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px;">
+                <p>Best Score: <span id="menu-best-score" style="color:var(--primary); font-weight:bold;">0</span></p>
+                <p>Total Stars: <span id="menu-total-stars" style="color:#ffd700;">0</span> ⭐</p>
+            </div>
+
+            <button class="btn" onclick="openLevelSelect()">▶ Play Game</button>
+            <button class="btn" onclick="openLevelSelect()">▦ Levels</button>
+            <button class="btn" onclick="openScreen('screen-how-to-play')">❓ How To Play</button>
+            <button class="btn" onclick="openScreen('screen-settings')">⚙ Settings</button>
+            <button class="btn" onclick="openScreen('screen-stats')">📊 Statistics</button>
+
+            <div class="ad-wrap" aria-label="Advertisement">
+                <span class="ad-label">Advertisement</span>
+                <ins class="adsbygoogle"
+                     data-ad-slot="XXXXXXXXXX"></ins>
+            </div>
+            <div class="monetize-note">Ads help keep MIND MASTER free to play.</div>
+        </div>
+    </div>
+
+    <!-- ================= LEVEL SELECT ================= -->
+    <div id="screen-level-select" class="screen">
+        <div class="top-bar">
+            <button class="icon-btn" onclick="openScreen('screen-menu')">◀ Back</button>
+            <div class="hud-item">⭐ <span id="ls-total-stars">0</span></div>
+        </div>
+        <div class="glass-panel" style="max-width: 95%; width: 600px; max-height: 85vh; display: flex; flex-direction: column;">
+            <h2 style="margin-top: 10px;">Select Level</h2>
+            <div id="levels-container" class="level-grid">
+                <!-- Levels injected here via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= GAME SCREEN ================= -->
+    <div id="screen-game" class="screen">
+        <div class="top-bar">
+            <button class="icon-btn" onclick="pauseGame()">⏸ Pause</button>
+            <div class="stats-hud">
+                <div class="hud-item" title="Lives">❤️ <span id="ui-lives">3</span></div>
+                <div class="hud-item" title="Score">🏆 <span id="ui-score">0</span></div>
+            </div>
+        </div>
+
+        <div id="game-area">
+            <div class="game-header">
+                <div>
+                    <div style="font-size: 1.2rem; font-weight: bold; color: var(--text);">Level <span id="ui-level">1</span></div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;" id="ui-difficulty">EASY</div>
+                </div>
+                <div class="timer" id="ui-timer">02:00</div>
+            </div>
+
+            <div id="board-wrapper">
+                <!-- Tiles injected via JS -->
+            </div>
+
+            <div style="display: flex; justify-content: space-between; width: 100%; margin-top: 15px; font-size: 0.9rem;">
+                <div>Moves: <span id="ui-moves" style="color:var(--primary); font-weight:bold;">0</span></div>
+                <div>Hints: <span id="ui-hints" style="color:var(--secondary); font-weight:bold;">3</span></div>
+            </div>
+
+            <div class="game-controls">
+                <button class="btn" onclick="useHint()" id="btn-hint">💡 Hint</button>
+                <button class="btn" onclick="restartLevel()">🔄 Restart</button>
+            </div>
+
+            <div class="ad-wrap" aria-label="Advertisement">
+                <span class="ad-label">Advertisement</span>
+                <ins class="adsbygoogle"
+                     data-ad-slot="XXXXXXXXXX"></ins>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= HOW TO PLAY ================= -->
+    <div id="screen-how-to-play" class="screen">
+        <div class="glass-panel">
+            <h2>How To Play</h2>
+            <div style="text-align: left; font-size: 0.9rem; line-height: 1.5; margin-bottom: 20px;">
+                <p>🧩 <b>Objective:</b> Reconstruct the shuffled picture before time runs out!</p><br>
+                <p>👆 <b>Controls:</b> Click/Tap tiles, use Arrow Keys, or Swipe to slide tiles into the empty space.</p><br>
+                <p>❤️ <b>Lives:</b> Trying to move an invalid tile costs 1 life. Lose 3 and it's Game Over!</p><br>
+                <p>💡 <b>Hints:</b> Highlights the best next move, but reduces your final score.</p><br>
+                <p>⭐ <b>Scoring:</b> Solve faster with fewer moves to earn 3 stars!</p>
+            </div>
+            <button class="btn" onclick="openScreen('screen-menu')">Got it!</button>
+        </div>
+    </div>
+
+    <!-- ================= SETTINGS ================= -->
+    <div id="screen-settings" class="screen">
+        <div class="glass-panel">
+            <h2>Settings</h2>
+            
+            <div class="settings-row">
+                <span>🔊 Sound Effects</span>
+                <label class="switch">
+                    <input type="checkbox" id="set-sound" onchange="toggleSetting('sound')">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="settings-row">
+                <span>✨ Animations</span>
+                <label class="switch">
+                    <input type="checkbox" id="set-anim" onchange="toggleSetting('animations')">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div class="reward-card">
+                <strong>💰 Free-to-play monetization</strong>
+                <div class="monetize-note">
+                    This build contains ready ad placements. Real earnings start only after
+                    you connect an approved ad network and replace the placeholder IDs.
+                </div>
+            </div>
+            <button class="btn" style="background: rgba(255,71,87,0.2); border-color: var(--danger); margin-top: 30px;" onclick="resetProgress()">🗑 Reset Progress</button>
+            <button class="btn" onclick="openScreen('screen-menu')">Back</button>
+        </div>
+    </div>
+
+    <!-- ================= STATISTICS ================= -->
+    <div id="screen-stats" class="screen">
+        <div class="glass-panel">
+            <h2>Statistics</h2>
+            <div style="text-align: left; margin-bottom: 20px;">
+                <div class="stat-row"><span>Levels Completed:</span> <span id="stat-levels">0/50</span></div>
+                <div class="stat-row"><span>Total Stars:</span> <span id="stat-stars">0</span></div>
+                <div class="stat-row"><span>Highest Score:</span> <span id="stat-high-score">0</span></div>
+                <div class="stat-row"><span>Total Moves:</span> <span id="stat-moves">0</span></div>
+                <div class="stat-row"><span>Hints Used:</span> <span id="stat-hints">0</span></div>
+                <div class="stat-row"><span>Play Time (min):</span> <span id="stat-time">0</span></div>
+            </div>
+            <button class="btn" onclick="openScreen('screen-menu')">Back</button>
+        </div>
+    </div>
+
+    <!-- ================= MODALS ================= -->
+    
+    <!-- Pause Modal -->
+    <div id="modal-pause" class="modal-overlay">
+        <div class="modal-content">
+            <h1 style="font-size: 2rem;">PAUSED</h1>
+            <br>
+            <button class="btn" onclick="resumeGame()">▶ Resume</button>
+            <button class="btn" onclick="restartLevel()">🔄 Restart</button>
+            <button class="btn" onclick="quitToMenu()">🚪 Quit</button>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="modal-gameover" class="modal-overlay">
+        <div class="modal-content">
+            <h1 style="font-size: 2rem; color: var(--danger); text-shadow: 0 0 10px rgba(255,0,0,0.5);">GAME OVER</h1>
+            <p id="go-reason" style="margin-bottom: 20px;"></p>
+            <div class="stat-row"><span>Score:</span> <span id="go-score">0</span></div>
+            <div class="stat-row"><span>Moves:</span> <span id="go-moves">0</span></div>
+            <br>
+            <button class="btn" onclick="restartLevel()">🔄 Try Again</button>
+            <button class="btn" onclick="openLevelSelect()">▦ Level Select</button>
+            <button class="btn" onclick="quitToMenu()">🏠 Main Menu</button>
+        </div>
+    </div>
+
+    <!-- Level Complete Modal -->
+    <div id="modal-complete" class="modal-overlay">
+        <div class="modal-content">
+            <h1 style="font-size: 2rem; color: var(--success); text-shadow: 0 0 10px rgba(0,255,0,0.5);">LEVEL COMPLETE!</h1>
+            <div class="stars-display" id="lc-stars">☆☆☆</div>
+            <p id="lc-new-best" style="color: var(--primary); font-weight: bold; display: none; animation: pulse 1s infinite;">NEW BEST SCORE!</p>
+            <div class="stat-row"><span>Score:</span> <span id="lc-score">0</span></div>
+            <div class="stat-row"><span>Moves:</span> <span id="lc-moves">0</span></div>
+            <div class="stat-row"><span>Time Left:</span> <span id="lc-time">0</span></div>
+            <br>
+            <button class="btn" onclick="nextLevel()" id="btn-next-level">▶ Next Level</button>
+            <button class="btn" onclick="restartLevel()">🔄 Replay</button>
+            <button class="btn" onclick="openLevelSelect()">▦ Level Select</button>
+        </div>
+    </div>
+
+    <!-- ================= JAVASCRIPT ================= -->
+    <script>
+        /**
+         * MIND MASTER - Core Game Engine
+         */
+
+        // --- Config & State ---
+        const TOTAL_LEVELS = 50;
+        let levels = [];
+        
+        let player = {
+            unlockedLevel: 1,
+            completedLevels: {}, // { levelId: { stars, score } }
+            totalStars: 0,
+            bestScore: 0,
+            settings: { sound: true, animations: true },
+            stats: { levelsCompleted: 0, totalMoves: 0, hintsUsed: 0, playTimeSecs: 0 }
+        };
+
+        let game = {
+            active: false,
+            paused: false,
+            levelId: 1,
+            grid: 3,
+            timeLimit: 120,
+            timeRemaining: 120,
+            timerInterval: null,
+            moves: 0,
+            hints: 3,
+            lives: 3,
+            score: 0,
+            boardState: [], // 1D array representing tile positions
+            emptyIdx: 0,    // index of empty slot in boardState
+            animating: false,
+            imageSrc: '',
+            imgLoaded: false
+        };
+
+        // --- Audio System (Web Audio API - No external files) ---
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playSound(type) {
+            if (!player.settings.sound) return;
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+            if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+            } else if (type === 'slide') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(200, now);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+            } else if (type === 'error') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.3);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            } else if (type === 'warn') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(400, now);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now); osc.stop(now + 0.2);
+            } else if (type === 'win') {
+                // Arpeggio
+                [440, 554, 659, 880].forEach((freq, i) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.type = 'sine';
+                    o.frequency.value = freq;
+                    o.connect(g); g.connect(audioCtx.destination);
+                    g.gain.setValueAtTime(0, now + i*0.1);
+                    g.gain.linearRampToValueAtTime(0.2, now + i*0.1 + 0.05);
+                    g.gain.linearRampToValueAtTime(0, now + i*0.1 + 0.3);
+                    o.start(now + i*0.1); o.stop(now + i*0.1 + 0.3);
+                });
+            }
+        }
+
+        // --- Initialization & Data ---
+        function generateLevels() {
+            levels = [];
+            for (let i = 1; i <= TOTAL_LEVELS; i++) {
+                let grid = i <= 10 ? 3 : i <= 25 ? 4 : i <= 40 ? 5 : 6;
+                let diff = i <= 10 ? "Easy" : i <= 25 ? "Medium" : i <= 40 ? "Hard" : "Expert";
+                let time = i <= 10 ? 120 : i <= 25 ? 150 : i <= 40 ? 180 : 240;
+                levels.push({
+                    id: i,
+                    image: `https://picsum.photos/seed/mindmaster_v2_${i}/600/600`,
+                    grid: grid,
+                    difficulty: diff,
+                    time: time
+                });
+            }
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('mindMasterSave');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    player = { ...player, ...parsed };
+                    // Ensure nested objects exist if updating structure
+                    if(!player.settings) player.settings = {sound:true, animations:true};
+                    if(!player.stats) player.stats = {levelsCompleted:0, totalMoves:0, hintsUsed:0, playTimeSecs:0};
+                } catch (e) { console.error("Corrupted save data, using defaults."); }
+            }
+            updateMenuUI();
+            
+            // Set toggles
+            document.getElementById('set-sound').checked = player.settings.sound;
+            document.getElementById('set-anim').checked = player.settings.animations;
+        }
+
+        function saveData() {
+            localStorage.setItem('mindMasterSave', JSON.stringify(player));
+            updateMenuUI();
+        }
+
+        function updateMenuUI() {
+            document.getElementById('menu-best-score').innerText = player.bestScore;
+            document.getElementById('menu-total-stars').innerText = player.totalStars;
+            document.getElementById('ls-total-stars').innerText = player.totalStars;
+        }
+
+        // --- UI Navigation ---
+        function openScreen(screenId) {
+            playSound('click');
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            
+            if(screenId === 'screen-stats') updateStatsUI();
+        }
+
+        function openLevelSelect() {
+            playSound('click');
+            const container = document.getElementById('levels-container');
+            container.innerHTML = '';
+            
+            levels.forEach(lvl => {
+                const isUnlocked = lvl.id <= player.unlockedLevel;
+                const data = player.completedLevels[lvl.id];
+                const stars = data ? '⭐'.repeat(data.stars) : '';
+                
+                const card = document.createElement('div');
+                card.className = `level-card ${isUnlocked ? 'unlocked' : 'locked'}`;
+                
+                if (isUnlocked) {
+                    card.onclick = () => startLevel(lvl.id);
+                    card.innerHTML = `
+                        <div class="level-num">${lvl.id < 10 ? '0'+lvl.id : lvl.id}</div>
+                        <div class="level-diff">${lvl.difficulty}</div>
+                        <div class="level-stars">${stars}</div>
+                        ${data ? `<div style="font-size:0.7rem; color:var(--text-muted)">Score: ${data.score}</div>` : ''}
+                    `;
+                } else {
+                    card.innerHTML = `
+                        <div class="level-num">🔒</div>
+                        <div class="level-diff">LOCKED</div>
+                    `;
+                }
+                container.appendChild(card);
+            });
+            openScreen('screen-level-select');
+        }
+
+        // --- Game Engine ---
+        function startLevel(id) {
+            playSound('click');
+            const lvl = levels[id - 1];
+            game = {
+                active: true, paused: false, levelId: lvl.id, grid: lvl.grid,
+                timeLimit: lvl.time, timeRemaining: lvl.time, timerInterval: null,
+                moves: 0, hints: 3, lives: 3, score: 0,
+                boardState: [], emptyIdx: lvl.grid * lvl.grid - 1,
+                animating: false, imageSrc: lvl.image, imgLoaded: false
+            };
+            
+            updateGameUI();
+            document.getElementById('btn-hint').disabled = false;
+            openScreen('screen-game');
+            
+            // Preload Image
+            const img = new Image();
+            img.crossOrigin = "Anonymous";
+            img.onload = () => { game.imgLoaded = true; buildBoard(); };
+            img.onerror = () => { game.imgLoaded = false; buildBoard(); }; // fallback
+            img.src = game.imageSrc;
+        }
+
+        function buildBoard() {
+            const wrapper = document.getElementById('board-wrapper');
+            wrapper.innerHTML = '';
+            const size = game.grid;
+            const totalTiles = size * size;
+            
+            game.boardState = Array.from({length: totalTiles}, (_, i) => i);
+            
+            for (let i = 0; i < totalTiles; i++) {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.id = `tile-${i}`;
+                
+                // Size
+                const pct = 100 / size;
+                tile.style.width = `${pct}%`;
+                tile.style.height = `${pct}%`;
+                
+                if (i === totalTiles - 1) {
+                    tile.style.opacity = '0'; // Empty tile
+                } else {
+                    if (game.imgLoaded) {
+                        tile.style.backgroundImage = `url(${game.imageSrc})`;
+                        tile.style.backgroundSize = `${size * 100}% ${size * 100}%`;
+                        const row = Math.floor(i / size);
+                        const col = i % size;
+                        // Calculate background position
+                        const bgPosX = col * (100 / (size - 1));
+                        const bgPosY = row * (100 / (size - 1));
+                        tile.style.backgroundPosition = `${bgPosX}% ${bgPosY}%`;
+                    } else {
+                        tile.classList.add('fallback-img');
+                        tile.innerText = i + 1;
+                    }
+                    
+                    // Interaction
+                    tile.onclick = () => handleTileClick(i);
+                }
+                wrapper.appendChild(tile);
+            }
+            
+            renderBoard(false);
+            
+            // Give 500ms delay before shuffling
+            setTimeout(() => {
+                shuffleBoard();
+                startTimer();
+            }, 500);
+        }
+
+        function renderBoard(animate = true) {
+            const size = game.grid;
+            game.boardState.forEach((originalIdx, currentPosIdx) => {
+                const tile = document.getElementById(`tile-${originalIdx}`);
+                if(!tile) return;
+                
+                const row = Math.floor(currentPosIdx / size);
+                const col = currentPosIdx % size;
+                
+                if(!animate || !player.settings.animations) {
+                    tile.style.transition = 'none';
+                } else {
+                    tile.style.transition = 'transform 0.2s ease-in-out, box-shadow 0.2s';
+                }
+                
+                tile.style.transform = `translate(${col * 100}%, ${row * 100}%)`;
+                
+                // restore transition if removed
+                if(!animate && player.settings.animations) {
+                    setTimeout(() => tile.style.transition = '', 50);
+                }
+            });
+        }
+
+        function shuffleBoard() {
+            // Guarantee solvability by performing random valid backward moves
+            const size = game.grid;
+            const shuffleMoves = size * size * 15;
+            let lastEmpty = -1;
+            
+            for (let i = 0; i < shuffleMoves; i++) {
+                const adjs = getAdjacentIndices(game.emptyIdx);
+                let valid = adjs.filter(idx => idx !== lastEmpty);
+                if (valid.length === 0) valid = adjs; // Should rarely happen
+                
+                const pick = valid[Math.floor(Math.random() * valid.length)];
+                
+                // Swap in state
+                const temp = game.boardState[game.emptyIdx];
+                game.boardState[game.emptyIdx] = game.boardState[pick];
+                game.boardState[pick] = temp;
+                
+                lastEmpty = game.emptyIdx;
+                game.emptyIdx = pick;
+            }
+            
+            renderBoard(player.settings.animations);
+        }
+
+        function getAdjacentIndices(idx) {
+            const size = game.grid;
+            const row = Math.floor(idx / size);
+            const col = idx % size;
+            const adjs = [];
+            
+            if (row > 0) adjs.push(idx - size); // Top
+            if (row < size - 1) adjs.push(idx + size); // Bottom
+            if (col > 0) adjs.push(idx - 1); // Left
+            if (col < size - 1) adjs.push(idx + 1); // Right
+            
+            return adjs;
+        }
+
+        function handleTileClick(originalIdx) {
+            if (!game.active || game.paused || game.animating) return;
+            
+            // Find current position of the clicked tile
+            const currentPos = game.boardState.indexOf(originalIdx);
+            
+            if (getAdjacentIndices(game.emptyIdx).includes(currentPos)) {
+                // Valid move
+                doSwap(currentPos);
+            } else {
+                // Invalid move - lose life
+                loseLife();
+            }
+        }
+
+        function doSwap(targetPosIdx) {
+            playSound('slide');
+            game.animating = true;
+            
+            // Remove hint glow if any
+            document.querySelectorAll('.hint-glow').forEach(el => el.classList.remove('hint-glow'));
+
+            // Swap in state array
+            const temp = game.boardState[game.emptyIdx];
+            game.boardState[game.emptyIdx] = game.boardState[targetPosIdx];
+            game.boardState[targetPosIdx] = temp;
+            
+            game.emptyIdx = targetPosIdx;
+            game.moves++;
+            player.stats.totalMoves++;
+            document.getElementById('ui-moves').innerText = game.moves;
+            
+            renderBoard(player.settings.animations);
+            
+            setTimeout(() => {
+                game.animating = false;
+                checkWin();
+            }, player.settings.animations ? 200 : 50);
+        }
+
+        function loseLife() {
+            playSound('error');
+            game.lives--;
+            document.getElementById('ui-lives').innerText = game.lives;
+            
+            // Screen shake effect
+            const board = document.getElementById('board-wrapper');
+            board.style.transform = 'translate(5px, 5px)';
+            setTimeout(() => board.style.transform = 'translate(-5px, -5px)', 50);
+            setTimeout(() => board.style.transform = 'translate(5px, -5px)', 100);
+            setTimeout(() => board.style.transform = 'translate(0, 0)', 150);
+            
+            if (game.lives <= 0) {
+                gameOver("Out of lives! Watch your taps.");
+            }
+        }
+
+        function checkWin() {
+            let win = true;
+            for (let i = 0; i < game.boardState.length; i++) {
+                if (game.boardState[i] !== i) {
+                    win = false;
+                    break;
+                }
+            }
+            
+            if (win) {
+                levelComplete();
+            }
+        }
+
+        // --- Hint Logic (Greedy Manhattan Distance) ---
+        function useHint() {
+            if (!game.active || game.paused || game.hints <= 0 || game.animating) return;
+            
+            playSound('click');
+            game.hints--;
+            player.stats.hintsUsed++;
+            document.getElementById('ui-hints').innerText = game.hints;
+            if(game.hints === 0) document.getElementById('btn-hint').disabled = true;
+
+            const adjs = getAdjacentIndices(game.emptyIdx);
+            let bestMove = adjs[0];
+            let bestDist = Infinity;
+            
+            adjs.forEach(pos => {
+                // simulate swap
+                const testState = [...game.boardState];
+                testState[game.emptyIdx] = testState[pos];
+                testState[pos] = game.grid * game.grid - 1; // empty original
+                
+                const d = calcManhattan(testState, game.grid);
+                if (d < bestDist) {
+                    bestDist = d;
+                    bestMove = pos;
+                }
+            });
+            
+            // Highlight the tile at bestMove
+            const tileOriginalIdx = game.boardState[bestMove];
+            const tileEl = document.getElementById(`tile-${tileOriginalIdx}`);
+            if(tileEl) {
+                tileEl.classList.add('hint-glow');
+                setTimeout(() => tileEl.classList.remove('hint-glow'), 2000);
+            }
+        }
+
+        function calcManhattan(state, size) {
+            let dist = 0;
+            for(let i=0; i<state.length; i++) {
+                if(state[i] === size*size - 1) continue;
+                let tX = state[i] % size;
+                let tY = Math.floor(state[i] / size);
+                let cX = i % size;
+                let cY = Math.floor(i / size);
+                dist += Math.abs(tX - cX) + Math.abs(tY - cY);
+            }
+            return dist;
+        }
+
+        // --- Timer & State Management ---
+        function startTimer() {
+            clearInterval(game.timerInterval);
+            game.timerInterval = setInterval(() => {
+                if(game.paused || !game.active) return;
+                
+                game.timeRemaining--;
+                player.stats.playTimeSecs++;
+                updateTimerUI();
+                
+                if (game.timeRemaining === 10) {
+                    document.getElementById('ui-timer').classList.add('danger');
+                    playSound('warn');
+                } else if (game.timeRemaining > 0 && game.timeRemaining < 10) {
+                    playSound('warn');
+                }
+                
+                if (game.timeRemaining <= 0) {
+                    gameOver("TIME UP!");
+                }
+            }, 1000);
+        }
+
+        function updateTimerUI() {
+            const t = document.getElementById('ui-timer');
+            const m = Math.floor(game.timeRemaining / 60).toString().padStart(2, '0');
+            const s = (game.timeRemaining % 60).toString().padStart(2, '0');
+            t.innerText = `${m}:${s}`;
+        }
+
+        function updateGameUI() {
+            document.getElementById('ui-level').innerText = game.levelId < 10 ? '0'+game.levelId : game.levelId;
+            document.getElementById('ui-difficulty').innerText = levels[game.levelId - 1].difficulty;
+            document.getElementById('ui-lives').innerText = game.lives;
+            document.getElementById('ui-score').innerText = game.score;
+            document.getElementById('ui-moves').innerText = game.moves;
+            document.getElementById('ui-hints').innerText = game.hints;
+            document.getElementById('ui-timer').classList.remove('danger');
+            updateTimerUI();
+        }
+
+        function pauseGame() {
+            if(!game.active) return;
+            playSound('click');
+            game.paused = true;
+            document.getElementById('modal-pause').classList.add('active');
+        }
+
+        function resumeGame() {
+            playSound('click');
+            game.paused = false;
+            document.getElementById('modal-pause').classList.remove('active');
+        }
+
+        function restartLevel() {
+            playSound('click');
+            closeModals();
+            startLevel(game.levelId);
+        }
+
+        function quitToMenu() {
+            playSound('click');
+            clearInterval(game.timerInterval);
+            game.active = false;
+            closeModals();
+            openScreen('screen-menu');
+        }
+
+        function gameOver(reason) {
+            playSound('error');
+            clearInterval(game.timerInterval);
+            game.active = false;
+            document.getElementById('go-reason').innerText = reason;
+            document.getElementById('go-score').innerText = calculateScore();
+            document.getElementById('go-moves').innerText = game.moves;
+            document.getElementById('modal-gameover').classList.add('active');
+        }
+
+        function levelComplete() {
+            playSound('win');
+            clearInterval(game.timerInterval);
+            game.active = false;
+            player.stats.levelsCompleted++;
+            
+            const score = calculateScore();
+            const stars = calculateStars(score);
+            
+            // Save Progress
+            if (game.levelId === player.unlockedLevel && player.unlockedLevel < TOTAL_LEVELS) {
+                player.unlockedLevel++;
+            }
+            
+            const prevData = player.completedLevels[game.levelId];
+            let isNewBest = false;
+            if (!prevData || score > prevData.score) {
+                isNewBest = true;
+                player.completedLevels[game.levelId] = { score, stars };
+                if(score > player.bestScore) player.bestScore = score;
+            }
+            
+            // Recalc total stars
+            let ts = 0;
+            for(let k in player.completedLevels) ts += player.completedLevels[k].stars;
+            player.totalStars = ts;
+            
+            saveData();
+            
+            // Update UI Modal
+            document.getElementById('lc-stars').innerText = '★'.repeat(stars) + '☆'.repeat(3 - stars);
+            document.getElementById('lc-score').innerText = score;
+            document.getElementById('lc-moves').innerText = game.moves;
+            document.getElementById('lc-time').innerText = game.timeRemaining + 's';
+            document.getElementById('lc-new-best').style.display = isNewBest ? 'block' : 'none';
+            
+            document.getElementById('btn-next-level').style.display = (game.levelId < TOTAL_LEVELS) ? 'inline-block' : 'none';
+            
+            setTimeout(() => {
+                document.getElementById('modal-complete').classList.add('active');
+                maybeShowAdAfterLevel();
+            }, 500);
+        }
+
+        function nextLevel() {
+            playSound('click');
+            closeModals();
+            startLevel(game.levelId + 1);
+        }
+
+        function calculateScore() {
+            const base = game.grid * 1000;
+            const timeBonus = game.timeRemaining * 10;
+            const movesPenalty = game.moves * 5;
+            const hintsPenalty = (3 - game.hints) * 200;
+            const livesPenalty = (3 - game.lives) * 300;
+            let final = base + timeBonus - movesPenalty - hintsPenalty - livesPenalty;
+            return Math.max(0, final);
+        }
+
+        function calculateStars(score) {
+            const maxTheo = (game.grid * 1000) + (game.timeLimit * 10);
+            if (score >= maxTheo * 0.7) return 3;
+            if (score >= maxTheo * 0.4) return 2;
+            return 1;
+        }
+
+        function closeModals() {
+            document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+        }
+
+        // --- Settings & Stats ---
+        function toggleSetting(type) {
+            playSound('click');
+            if (type === 'sound') player.settings.sound = document.getElementById('set-sound').checked;
+            if (type === 'animations') player.settings.animations = document.getElementById('set-anim').checked;
+            saveData();
+        }
+
+        function resetProgress() {
+            playSound('warn');
+            if(confirm("Are you sure you want to delete all progress? This cannot be undone.")) {
+                localStorage.removeItem('mindMasterSave');
+                location.reload();
+            }
+        }
+
+        function updateStatsUI() {
+            document.getElementById('stat-levels').innerText = `${player.stats.levelsCompleted} / ${TOTAL_LEVELS}`;
+            document.getElementById('stat-stars').innerText = player.totalStars;
+            document.getElementById('stat-high-score').innerText = player.bestScore;
+            document.getElementById('stat-moves').innerText = player.stats.totalMoves;
+            document.getElementById('stat-hints').innerText = player.stats.hintsUsed;
+            document.getElementById('stat-time').innerText = Math.floor(player.stats.playTimeSecs / 60);
+        }
+
+        // --- Controls (Keyboard & Swipe) ---
+        window.addEventListener('keydown', (e) => {
+            if(!game.active || game.paused) return;
+            
+            const size = game.grid;
+            const eRow = Math.floor(game.emptyIdx / size);
+            const eCol = game.emptyIdx % size;
+            let targetIdx = -1;
+
+            if(e.key === 'ArrowUp') { e.preventDefault(); if(eRow < size - 1) targetIdx = game.emptyIdx + size; }
+            if(e.key === 'ArrowDown') { e.preventDefault(); if(eRow > 0) targetIdx = game.emptyIdx - size; }
+            if(e.key === 'ArrowLeft') { e.preventDefault(); if(eCol < size - 1) targetIdx = game.emptyIdx + 1; }
+            if(e.key === 'ArrowRight') { e.preventDefault(); if(eCol > 0) targetIdx = game.emptyIdx - 1; }
+
+            if(targetIdx !== -1) doSwap(targetIdx);
+        });
+
+        // Touch swipe logic
+        let touchStartX = 0;
+        let touchStartY = 0;
+        const boardEl = document.getElementById('board-wrapper');
+        
+        boardEl.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, {passive: true});
+
+        boardEl.addEventListener('touchend', e => {
+            if(!game.active || game.paused) return;
+            let touchEndX = e.changedTouches[0].screenX;
+            let touchEndY = e.changedTouches[0].screenY;
+            handleSwipe(touchEndX - touchStartX, touchEndY - touchStartY);
+        }, {passive: true});
+
+        function handleSwipe(dx, dy) {
+            if(Math.abs(dx) < 30 && Math.abs(dy) < 30) return; // Too small, likely a tap
+            
+            const size = game.grid;
+            const eRow = Math.floor(game.emptyIdx / size);
+            const eCol = game.emptyIdx % size;
+            let targetIdx = -1;
+
+            if(Math.abs(dx) > Math.abs(dy)) {
+                // Horizontal
+                if(dx < 0 && eCol < size - 1) targetIdx = game.emptyIdx + 1; // Swipe Left -> move right tile left
+                if(dx > 0 && eCol > 0) targetIdx = game.emptyIdx - 1;       // Swipe Right -> move left tile right
+            } else {
+                // Vertical
+                if(dy < 0 && eRow < size - 1) targetIdx = game.emptyIdx + size; // Swipe Up -> move bottom tile up
+                if(dy > 0 && eRow > 0) targetIdx = game.emptyIdx - size;        // Swipe Down -> move top tile down
+            }
+
+            if(targetIdx !== -1) doSwap(targetIdx);
+        }
+
+        // --- Boot Game ---
+        window.onload = () => {
+            generateLevels();
+            loadData();
+            
+            // Allow audio context to be created on first interaction
+            document.body.addEventListener('click', initAudio, { once: true });
+        };
+
+    </script>
+
+    <!-- Monetization information modal -->
+    <div id="modal-ad-info" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Ads / Rewards</h2>
+            <p style="line-height:1.5;font-size:.9rem;">
+                This game is prepared for advertising, but no fake ad or fake cash reward is shown.
+                Connect a real approved ad provider before enabling monetization.
+            </p>
+            <button class="btn" onclick="closeModals()">Got it</button>
+        </div>
+    </div>
+
+    <!-- Simple advertising consent notice -->
+    <div id="consent-banner" class="consent-banner">
+        <div style="font-weight:bold">🍪 Ads & Privacy</div>
+        <div class="monetize-note">
+            If advertising is enabled, the ad provider may use cookies or similar technologies
+            according to its own policies. You can continue without accepting personalized ads.
+        </div>
+        <div class="consent-actions">
+            <button class="btn btn-small" onclick="acceptAdsConsent()">Allow ads</button>
+            <button class="btn btn-small" onclick="declineAdsConsent()">Continue without</button>
+        </div>
+    </div>
+
+</body>
+</html>
